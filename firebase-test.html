@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Integration Test</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0a0f0d 0%, #1a2522 100%);
+      color: #e0e0e0;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(31, 45, 41, 0.9);
+      border: 2px solid rgba(230, 195, 71, 0.3);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    h1 {
+      color: #e6c347;
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 2rem;
+    }
+    .status-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #e6c347;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+    }
+    .status-icon {
+      font-size: 1.5rem;
+      min-width: 2rem;
+    }
+    .status-text {
+      flex: 1;
+    }
+    .test-section {
+      margin: 2rem 0;
+    }
+    .test-title {
+      color: #5fba84;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(95, 186, 132, 0.3);
+    }
+    button {
+      background: linear-gradient(135deg, rgba(230, 195, 71, 0.2), rgba(230, 195, 71, 0.1));
+      border: 2px solid rgba(230, 195, 71, 0.4);
+      color: #e6c347;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 0.5rem;
+      font-weight: 600;
+    }
+    button:hover {
+      background: linear-gradient(135deg, rgba(230, 195, 71, 0.3), rgba(230, 195, 71, 0.15));
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(230, 195, 71, 0.3);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .log-box {
+      background: #000;
+      border: 1px solid rgba(95, 186, 132, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    .log-entry {
+      padding: 0.25rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .log-success { color: #5fba84; }
+    .log-error { color: #e74c3c; }
+    .log-warning { color: #f39c12; }
+    .log-info { color: #3498db; }
+    .data-display {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #5fba84;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔥 اختبار تكامل Firebase</h1>
+    
+    <div class="status-box">
+      <h3 style="color: #e6c347; margin-bottom: 1rem;">حالة الاتصال</h3>
+      <div class="status-item" id="status-firebase">
+        <span class="status-icon">⏳</span>
+        <span class="status-text">Firebase: جاري التحميل...</span>
+      </div>
+      <div class="status-item" id="status-auth">
+        <span class="status-icon">⏳</span>
+        <span class="status-text">المصادقة: جاري التحميل...</span>
+      </div>
+      <div class="status-item" id="status-firestore">
+        <span class="status-icon">⏳</span>
+        <span class="status-text">Firestore: جاري التحميل...</span>
+      </div>
+      <div class="status-item" id="status-analytics">
+        <span class="status-icon">⏳</span>
+        <span class="status-text">Analytics: جاري التحميل...</span>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3 class="test-title">اختبارات البيانات</h3>
+      <button onclick="testSaveData()">💾 حفظ بيانات تجريبية</button>
+      <button onclick="testLoadData()">📥 تحميل البيانات</button>
+      <button onclick="testUpdateData()">🔄 تحديث البيانات</button>
+      <button onclick="testDeleteData()">🗑️ حذف البيانات</button>
+      <div id="data-result" class="data-display" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+      <h3 class="test-title">اختبارات التحليلات</h3>
+      <button onclick="testAnalytics()">📊 إرسال حدث تحليلي</button>
+      <button onclick="testMultipleEvents()">📈 إرسال أحداث متعددة</button>
+    </div>
+
+    <div class="test-section">
+      <h3 class="test-title">اختبارات الأداء</h3>
+      <button onclick="testOfflineMode()">📴 اختبار الوضع بلا اتصال</button>
+      <button onclick="testMigration()">🔄 اختبار ترحيل البيانات</button>
+    </div>
+
+    <div class="test-section">
+      <h3 class="test-title">سجل الأحداث</h3>
+      <button onclick="clearLog()">🗑️ مسح السجل</button>
+      <div class="log-box" id="log-box"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { 
+      initFirebase, 
+      authenticateUser,
+      getCurrentUser,
+      saveToFirestore,
+      loadFromFirestore,
+      updateFirestore,
+      deleteFromFirestore,
+      logAnalyticsEvent,
+      syncLocalStorageToFirestore
+    } from './firebase-config.js';
+
+    // Global test state
+    window.testState = {
+      firebase: null,
+      user: null,
+      initialized: false
+    };
+
+    // Logging function
+    function log(message, type = 'info') {
+      const logBox = document.getElementById('log-box');
+      const timestamp = new Date().toLocaleTimeString('ar-EG');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      
+      const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+      };
+      
+      entry.textContent = `[${timestamp}] ${icons[type]} ${message}`;
+      logBox.appendChild(entry);
+      logBox.scrollTop = logBox.scrollHeight;
+      console.log(`[${type.toUpperCase()}]`, message);
+    }
+
+    // Update status display
+    function updateStatus(id, icon, text, type = 'success') {
+      const elem = document.getElementById(id);
+      if (elem) {
+        elem.querySelector('.status-icon').textContent = icon;
+        elem.querySelector('.status-text').textContent = text;
+        elem.style.borderLeft = `4px solid ${type === 'success' ? '#5fba84' : type === 'error' ? '#e74c3c' : '#f39c12'}`;
+      }
+    }
+
+    // Initialize Firebase
+    async function init() {
+      try {
+        log('🔥 بدء تهيئة Firebase...', 'info');
+        
+        const services = await initFirebase();
+        window.testState.firebase = services;
+        updateStatus('status-firebase', '✅', 'Firebase: متصل', 'success');
+        log('✅ تم تهيئة Firebase بنجاح', 'success');
+
+        log('🔐 بدء المصادقة...', 'info');
+        const user = await authenticateUser();
+        window.testState.user = user;
+        updateStatus('status-auth', '✅', `المصادقة: مفعّلة (${user.uid.substring(0, 8)}...)`, 'success');
+        log(`✅ تم المصادقة بنجاح - معرف المستخدم: ${user.uid}`, 'success');
+
+        updateStatus('status-firestore', '✅', 'Firestore: متصل', 'success');
+        log('✅ Firestore جاهز للاستخدام', 'success');
+
+        updateStatus('status-analytics', '✅', 'Analytics: مفعّل', 'success');
+        log('✅ Firebase Analytics مفعّل', 'success');
+
+        window.testState.initialized = true;
+        log('🎉 جميع الخدمات جاهزة!', 'success');
+
+        // Log initial analytics event
+        logAnalyticsEvent('test_page_opened', {
+          timestamp: new Date().toISOString(),
+          page: 'firebase_test'
+        });
+        log('📊 تم إرسال حدث test_page_opened', 'info');
+
+      } catch (error) {
+        log(`❌ خطأ في التهيئة: ${error.message}`, 'error');
+        updateStatus('status-firebase', '❌', 'Firebase: خطأ في الاتصال', 'error');
+        updateStatus('status-auth', '❌', 'المصادقة: فشلت', 'error');
+        updateStatus('status-firestore', '❌', 'Firestore: غير متصل', 'error');
+        updateStatus('status-analytics', '❌', 'Analytics: غير مفعّل', 'error');
+      }
+    }
+
+    // Test: Save data
+    window.testSaveData = async function() {
+      if (!window.testState.initialized) {
+        log('⚠️ يرجى الانتظار حتى تكتمل التهيئة', 'warning');
+        return;
+      }
+
+      try {
+        const testData = {
+          favorites: ['dhikr1', 'dhikr2', 'dhikr3'],
+          timestamp: new Date().toISOString()
+        };
+
+        log('💾 جاري حفظ البيانات التجريبية...', 'info');
+        await saveToFirestore('test_favorites', testData);
+        log('✅ تم حفظ البيانات بنجاح', 'success');
+        
+        document.getElementById('data-result').style.display = 'block';
+        document.getElementById('data-result').textContent = JSON.stringify(testData, null, 2);
+      } catch (error) {
+        log(`❌ خطأ في الحفظ: ${error.message}`, 'error');
+      }
+    };
+
+    // Test: Load data
+    window.testLoadData = async function() {
+      if (!window.testState.initialized) {
+        log('⚠️ يرجى الانتظار حتى تكتمل التهيئة', 'warning');
+        return;
+      }
+
+      try {
+        log('📥 جاري تحميل البيانات...', 'info');
+        const data = await loadFromFirestore('test_favorites');
+        
+        if (data) {
+          log('✅ تم تحميل البيانات بنجاح', 'success');
+          document.getElementById('data-result').style.display = 'block';
+          document.getElementById('data-result').textContent = JSON.stringify(data, null, 2);
+        } else {
+          log('ℹ️ لا توجد بيانات محفوظة', 'info');
+          document.getElementById('data-result').style.display = 'block';
+          document.getElementById('data-result').textContent = 'لا توجد بيانات';
+        }
+      } catch (error) {
+        log(`❌ خطأ في التحميل: ${error.message}`, 'error');
+      }
+    };
+
+    // Test: Update data
+    window.testUpdateData = async function() {
+      if (!window.testState.initialized) {
+        log('⚠️ يرجى الانتظار حتى تكتمل التهيئة', 'warning');
+        return;
+      }
+
+      try {
+        const updatedData = {
+          favorites: ['dhikr1', 'dhikr2', 'dhikr3', 'dhikr4', 'dhikr5'],
+          timestamp: new Date().toISOString(),
+          updated: true
+        };
+
+        log('🔄 جاري تحديث البيانات...', 'info');
+        await updateFirestore('test_favorites', updatedData);
+        log('✅ تم تحديث البيانات بنجاح', 'success');
+        
+        document.getElementById('data-result').style.display = 'block';
+        document.getElementById('data-result').textContent = JSON.stringify(updatedData, null, 2);
+      } catch (error) {
+        log(`❌ خطأ في التحديث: ${error.message}`, 'error');
+      }
+    };
+
+    // Test: Delete data
+    window.testDeleteData = async function() {
+      if (!window.testState.initialized) {
+        log('⚠️ يرجى الانتظار حتى تكتمل التهيئة', 'warning');
+        return;
+      }
+
+      try {
+        log('🗑️ جاري حذف البيانات...', 'info');
+        await deleteFromFirestore('test_favorites');
+        log('✅ تم حذف البيانات بنجاح', 'success');
+        
+        document.getElementById('data-result').style.display = 'block';
+        document.getElementById('data-result').textContent = 'تم حذف البيانات';
+      } catch (error) {
+        log(`❌ خطأ في الحذف: ${error.message}`, 'error');
+      }
+    };
+
+    // Test: Analytics
+    window.testAnalytics = function() {
+      if (!window.testState.initialized) {
+        log('⚠️ يرجى الانتظار حتى تكتمل التهيئة', 'warning');
+        return;
+      }
+
+      try {
+        logAnalyticsEvent('test_button_clicked', {
+          button_name: 'analytics_test',
+          timestamp: new Date().toISOString()
+        });
+        log('📊 تم إرسال حدث test_button_clicked', 'success');
+      } catch (error) {
+        log(`❌ خطأ في Analytics: ${error.message}`, 'error');
+      }
+    };
+
+    // Test: Multiple events
+    window.testMultipleEvents = function() {
+      if (!window.testState.initialized) {
+        log('⚠️ يرجى الانتظار حتى تكتمل التهيئة', 'warning');
+        return;
+      }
+
+      try {
+        const events = [
+          { name: 'screen_view', params: { screen_name: 'test_page' } },
+          { name: 'user_engagement', params: { engagement_time: 120 } },
+          { name: 'select_content', params: { content_type: 'dhikr', item_id: 'morning_1' } }
+        ];
+
+        events.forEach(event => {
+          logAnalyticsEvent(event.name, event.params);
+          log(`📊 تم إرسال حدث ${event.name}`, 'info');
+        });
+
+        log('✅ تم إرسال جميع الأحداث بنجاح', 'success');
+      } catch (error) {
+        log(`❌ خطأ في إرسال الأحداث: ${error.message}`, 'error');
+      }
+    };
+
+    // Test: Offline mode
+    window.testOfflineMode = function() {
+      log('📴 اختبار الوضع بلا اتصال...', 'info');
+      log('ℹ️ افصل الإنترنت واختبر حفظ/تحميل البيانات', 'info');
+      log('ℹ️ يجب أن تستمر العمليات باستخدام التخزين المحلي', 'info');
+    };
+
+    // Test: Migration
+    window.testMigration = async function() {
+      if (!window.testState.initialized) {
+        log('⚠️ يرجى الانتظار حتى تكتمل التهيئة', 'warning');
+        return;
+      }
+
+      try {
+        // Set some test data in localStorage
+        localStorage.setItem('favorites', JSON.stringify(['test1', 'test2']));
+        localStorage.setItem('completed', JSON.stringify({ test1: 5, test2: 3 }));
+
+        log('🔄 جاري ترحيل البيانات من localStorage...', 'info');
+        await syncLocalStorageToFirestore();
+        log('✅ تم ترحيل البيانات بنجاح', 'success');
+      } catch (error) {
+        log(`❌ خطأ في الترحيل: ${error.message}`, 'error');
+      }
+    };
+
+    // Clear log
+    window.clearLog = function() {
+      document.getElementById('log-box').innerHTML = '';
+      log('🗑️ تم مسح السجل', 'info');
+    };
+
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>
