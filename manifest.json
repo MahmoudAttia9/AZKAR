@@ -1,0 +1,29 @@
+{
+  "name": "أذكار المسلم - حصن المسلم",
+  "short_name": "أذكار المسلم",
+  "description": "أكثر من 220 ذكر وأدعية موثقة من القرآن والسنة الصحيحة",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020706",
+  "theme_color": "#020706",
+  "orientation": "portrait",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["lifestyle", "education", "utilities"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
